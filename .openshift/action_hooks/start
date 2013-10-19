@@ -1,0 +1,27 @@
+#!/bin/bash
+# The logic to start up your application should be put in this
+# script. The application will work only if it binds to
+# $OPENSHIFT_DIY_IP:8080
+
+FMT="%a %b %d % %H:%M:%S GMT%z (%Z)"
+
+logf="$OPENSHIFT_DIY_DIR/logs/beego.log"
+
+pushd "$GOPATH/src/beego" > /dev/null
+{
+
+	if [ -f "./main" ]; then
+		echo "`date +"$FMT"`: Starting application '$OPENSHIFT_APP_NAME'..."
+		nohup "./main" >> $logf 2>&1 &
+		ret=$?
+		npid=$!
+		if [ $ret -eq 0 ]; then
+			echo "$npid" > "$OPENSHIFT_DIY_DIR/beego.pid"
+        else
+			echo "Application '$OPENSHIFT_APP_NAME' failed to start - $ret" 1>&2
+			exit $ret
+		fi
+	else
+		echo "WARN: Could not find the compiled application , will not start"
+	fi
+} >> $logf
